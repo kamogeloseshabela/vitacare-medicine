@@ -22,7 +22,8 @@ jobs:
           openjdk-11-jdk \
           git build-essential \
           libssl-dev libffi-dev \
-          autoconf automake cmake
+          autoconf automake cmake \
+          libncurses5-dev
 
     # 3. Setup Python virtual environment
     - name: Setup Python venv
@@ -32,26 +33,41 @@ jobs:
         pip install --upgrade pip setuptools wheel
         pip install buildozer cython
 
-    # 4. Let Buildozer handle Android SDK installation automatically
-    - name: Build APK with Buildozer
+    # 4. Install Python-for-Android first
+    - name: Install Python-for-Android
       run: |
         source venv/bin/activate
-        
-        # Initialize buildozer if buildozer.spec doesn't exist
+        pip install python-for-android
+
+    # 5. Initialize Buildozer and create spec file
+    - name: Initialize Buildozer
+      run: |
+        source venv/bin/activate
+        # Create buildozer.spec if it doesn't exist
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
         
-        # Clean previous builds
-        buildozer android clean
+        # Show buildozer version and check environment
+        buildozer --version
+        buildozer android --help
+
+    # 6. Build APK (let Buildozer handle dependencies)
+    - name: Build APK
+      run: |
+        source venv/bin/activate
+        # Set environment variables
+        export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+        export PATH=$JAVA_HOME/bin:$PATH
         
-        # Build the APK - Buildozer will handle SDK installation automatically
+        # Build without cleaning first to avoid the p4a issue
         buildozer -v android debug
       env:
         JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
-        
-    # 5. Upload APK as artifact
+
+    # 7. Upload APK as artifact
     - name: Upload APK artifact
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: kivy-apk
