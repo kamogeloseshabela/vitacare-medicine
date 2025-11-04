@@ -12,7 +12,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-       # 2. Install system dependencies
+    # 2. Install system dependencies
     - name: Install system packages
       run: |
         sudo apt-get update
@@ -24,30 +24,33 @@ jobs:
         python3 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip setuptools wheel
-        pip install buildozer
-
+        pip install buildozer cython
 
     # 4. Install Android SDK Command-line Tools and Build-Tools
     - name: Install Android SDK & Build-Tools
       run: |
-        export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-        mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-        cd $ANDROID_SDK_ROOT/cmdline-tools
+        export ANDROID_SDK_ROOT=$HOME/android-sdk
+        mkdir -p $ANDROID_SDK_ROOT
+        cd $ANDROID_SDK_ROOT
         wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-        unzip cmdline-tools.zip
-        mv cmdline-tools latest
-        rm cmdline-tools.zip
-        export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
-
+        unzip -q cmdline-tools.zip -d cmdline-tools
+        mkdir -p cmdline-tools/latest
+        mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/
+        rm -rf cmdline-tools/cmdline-tools cmdline-tools.zip
+        
+        # Set environment variables
+        echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+        echo "PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
+        
         # Accept licenses and install necessary packages
-        yes | sdkmanager --licenses
-        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+        yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
     # 5. Show versions (optional, for debug)
     - name: Check tools versions
       run: |
         java -version
-        sdkmanager --version
+        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --version
         python --version
 
     # 6. Run Buildozer to build APK
