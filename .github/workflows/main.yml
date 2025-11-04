@@ -16,6 +16,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y tar unzip wget openjdk-17-jdk python3-pip python3-venv build-essential git
+    - name: Install distutils for Python
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-distutils
     - name: Check required tools
       run: |
         which tar
