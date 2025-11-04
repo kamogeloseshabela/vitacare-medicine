@@ -2,32 +2,49 @@ name: Build Kivy APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: ${{ runner.home }}/android
+      PATH: ${{ runner.home }}/android/cmdline-tools/latest/bin:${{ runner.home }}/android/platform-tools:$PATH
+
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-      - name: Install dependencies
+      - name: Install pip packages
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip python3-setuptools python3-virtualenv git zip unzip openjdk-17-jdk
+          python -m pip install --upgrade pip setuptools wheel buildozer
 
-      - name: Install Buildozer
+      - name: Download Android SDK Command Line Tools
         run: |
-          pip install --upgrade pip
-          pip install buildozer cython
+          mkdir -p $HOME/android/cmdline-tools
+          cd $HOME/android
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip -d cmdline-tools
+          mv cmdline-tools/cmdline-tools $HOME/android/cmdline-tools/latest
 
-      - name: Setup Android SDK
+      - name: Install Android Build Tools & Platforms
         run: |
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools
-          cd $HOME/.buildozer/android/platform/android-sdk
-          sdkmanager "platform-tools" "cmdline-tools;latest"
           yes | sdkmanager --licenses
-          sdkmanager "build-tools;36.1.0" "platforms;android-31"
+          sdkmanager "platform-tools" "build-tools;36.1.0" "platforms;android-31"
 
       - name: Build APK
         run: |
           buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: Vitacare-APK
+          path: bin/*.apk
