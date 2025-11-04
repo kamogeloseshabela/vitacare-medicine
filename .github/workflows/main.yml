@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install required packages
+      - name: Install system packages
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip python3-venv build-essential tar unzip wget openjdk-17-jdk git
@@ -26,10 +26,20 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip buildozer
 
-      - name: Install Buildozer dependencies
+      - name: Download Android SDK command line tools
         run: |
-          source venv/bin/activate
-          sudo apt-get install -y python3-dev libffi-dev libssl-dev
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
+          mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+
+      - name: Download Android NDK
+        run: |
+          wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O ndk.zip
+          unzip ndk.zip -d ${{ github.workspace }}/.buildozer/android/platform/
+          mv ${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b $ANDROID_NDK_ROOT
 
       - name: Build APK with Buildozer
         run: |
