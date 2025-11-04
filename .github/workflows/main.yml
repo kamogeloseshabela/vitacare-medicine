@@ -21,29 +21,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-venv python3-pip openjdk-11-jdk unzip tar wget git
 
-      - name: Create virtual environment
+      - name: Create virtual environment and activate
         run: |
           python -m venv venv
           source venv/bin/activate
           python -m pip install --upgrade pip setuptools wheel
 
-      - name: Install Buildozer and Cython
+      - name: Install Buildozer, Cython, and dependencies
         run: |
           source venv/bin/activate
           pip install buildozer cython
 
-      - name: Initialize Buildozer (install Android SDK/NDK)
+      - name: Clone Python-for-Android
         run: |
-          source venv/bin/activate
-          buildozer android clean
-          buildozer android debug
+          git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
 
       - name: Build APK
         run: |
           source venv/bin/activate
           buildozer android debug
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: vitacare-apk
