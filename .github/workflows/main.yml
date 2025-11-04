@@ -12,19 +12,20 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 2. Install system dependencies
+       # 2. Install system dependencies
     - name: Install system packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3.11 python3.11-venv python3-pip unzip wget tar zip openjdk-11-jdk git build-essential
+        sudo apt-get install -y python3 python3-venv python3-pip unzip wget tar zip openjdk-11-jdk git build-essential
 
-    # 3. Set up Python virtual environment
+    # 3. Setup Python virtual environment
     - name: Setup Python venv
       run: |
-        python3.11 -m venv venv
+        python3 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip setuptools wheel
         pip install buildozer
+
 
     # 4. Install Android SDK Command-line Tools and Build-Tools
     - name: Install Android SDK & Build-Tools
