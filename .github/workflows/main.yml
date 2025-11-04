@@ -8,41 +8,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+    # 1. Checkout your repository
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+    # 2. Install system dependencies
+    - name: Install system packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3.11 python3.11-venv python3-pip unzip wget tar zip openjdk-11-jdk git build-essential
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-venv python3-pip openjdk-11-jdk unzip tar wget git
+    # 3. Set up Python virtual environment
+    - name: Setup Python venv
+      run: |
+        python3.11 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip setuptools wheel
+        pip install buildozer
 
-      - name: Create virtual environment and activate
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          python -m pip install --upgrade pip setuptools wheel
+    # 4. Install Android SDK Command-line Tools and Build-Tools
+    - name: Install Android SDK & Build-Tools
+      run: |
+        export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
+        mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+        cd $ANDROID_SDK_ROOT/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+        unzip cmdline-tools.zip
+        mv cmdline-tools latest
+        rm cmdline-tools.zip
+        export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
 
-      - name: Install Buildozer, Cython, and dependencies
-        run: |
-          source venv/bin/activate
-          pip install buildozer cython
+        # Accept licenses and install necessary packages
+        yes | sdkmanager --licenses
+        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
-      - name: Clone Python-for-Android
-        run: |
-          git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
+    # 5. Show versions (optional, for debug)
+    - name: Check tools versions
+      run: |
+        java -version
+        sdkmanager --version
+        python --version
 
-      - name: Build APK
-        run: |
-          source venv/bin/activate
-          buildozer android debug
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: vitacare-apk
-          path: bin/*.apk
+    # 6. Run Buildozer to build APK
+    - name: Build APK
+      run: |
+        source venv/bin/activate
+        buildozer -v android debug
