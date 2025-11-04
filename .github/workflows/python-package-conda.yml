@@ -1,0 +1,39 @@
+name: Build Kivy APK
+
+on:
+  workflow_dispatch:
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
+      ANDROID_NDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b
+      PATH: /usr/bin:${{ github.workspace }}/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b:$PATH
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install system packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y tar unzip wget openjdk-17-jdk python3-pip python3-venv build-essential git
+    - name: Install distutils for Python
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-distutils
+    - name: Check required tools
+      run: |
+        which tar
+        tar --version
+        which unzip
+        unzip -v
+        java -version
+    - name: Setup Python and venv
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install buildozer cython
+    - name: Build APK
+      run: |
+        source venv/bin/activate
+        buildozer -v android debug
