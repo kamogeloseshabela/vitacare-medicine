@@ -16,6 +16,12 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y tar unzip wget openjdk-17-jdk python3-pip python3-venv build-essential git
+    - name: Install Python packages
+      run: |
+        python3 -m ensurepip --upgrade
+        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install buildozer cython
+
     - name: Install distutils for Python
       run: |
           sudo apt-get update
